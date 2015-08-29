@@ -42,10 +42,26 @@ void setup() {
   // give the Ethernet shield a second to initialize:
   Serial.println("Initializing Ethernet");
   delay(1000);
-  Serial.println("Connecting to ");
+  Serial.print("Connecting to ");
+  for (uint8_t m = 0; m < 4; m++) {
+    Serial.print(byte(server[m]));
+    if (m < 3) {
+      Serial.print(".");
+    } else {
+      Serial.println();
+    }
+  }
   // if you get a connection, report back via serial:
   if (client.connect(server, serverPort)) {
-    Serial.println("Connected to: ");
+    Serial.print("Connected to: ");
+    for (uint8_t m = 0; m < 4; m++) {
+      Serial.print(byte(server[m]));
+      if (m < 3) {
+        Serial.print(".");
+      } else {
+        Serial.println();
+      }
+    }
   }
   else {
     // if you didn't get a connection to the server:
@@ -146,15 +162,17 @@ void loop(void) {
   //String clientMsg = "";
   if (client) {
     String clientMsg = "";
+    // FIXME?
     while (client.connected()) {
 
       // Receive
       int incomingByte2 = 0;
       while (client.available()) {
         incomingByte2 = client.read();
-        clientMsg+=char(incomingByte2);
+        clientMsg += char(incomingByte2);
         if (char(incomingByte2) == '\n') {
-          Serial.println();
+          // FIXME!!!
+          //Serial.println();
           Serial.print(clientMsg); // Then send the message through Serial
           clientMsg = "";
           Serial.flush();
@@ -178,7 +196,7 @@ void loop(void) {
       while (Serial.available() > 0) { // If data has been received from the serial connection
         incomingByte = Serial.read();
         clientMsg += char(incomingByte);
-        delay(1);
+        //delay(1);
         if (char(incomingByte) == '\n') {
           rebootUnit(clientMsg, client);
           //Serial.println("Sent: " + clientMsg);
@@ -206,10 +224,26 @@ void loop(void) {
       // give the Ethernet shield a second to initialize:
       Serial.println("Initializing Ethernet");
       delay(1000);
-      Serial.println("Connecting to 10.13.38.177");
+      Serial.print("Connecting to ");
+      for (uint8_t m = 0; m < 4; m++) {
+        Serial.print(byte(server[m]));
+        if (m < 3) {
+          Serial.print(".");
+        } else {
+          Serial.println();
+        }
+      }
       // if you get a connection, report back via serial:
       if (client.connect(server, serverPort)) {
-        Serial.println("Connected to: 10.13.38.177");
+        Serial.print("Connected to: ");
+        for (uint8_t m = 0; m < 4; m++) {
+          Serial.print(byte(server[m]));
+          if (m < 3) {
+            Serial.print(".");
+          } else {
+            Serial.println();
+          }
+        }
       }
       else {
         // if you didn't get a connection to the server:
