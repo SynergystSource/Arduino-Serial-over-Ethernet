@@ -190,7 +190,11 @@ void loop(void) {
       int incomingByte2 = 0;
       if (client.available() > 0) {
         incomingByte2 = client.read();
-        clientMsg += char(incomingByte2);
+        Serial.write(char(incomingByte2));
+        Serial1.write(char(incomingByte2));
+        Serial.flush();
+        Serial1.flush();
+        /*clientMsg += char(incomingByte2);
         if (char(incomingByte2) == '\n') {
           // FIXME!!!
           //Serial.println();
@@ -199,7 +203,7 @@ void loop(void) {
           clientMsg = "";
           Serial.flush();
           Serial1.flush();
-        }
+        }*/
       } // End of Receive
 
       // Transmit Serial1
