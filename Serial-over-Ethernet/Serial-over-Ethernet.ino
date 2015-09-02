@@ -6,9 +6,9 @@
 
 // ethernet
 byte mac[] = { 0xD3, 0x4D, 0xB3, 0x3F, 0xF3, 0x3D };
-byte ip[] = { 10, 13, 38, 177 };
+/*byte ip[] = { 10, 13, 38, 177 };
 byte gateway[] = { 10, 13, 38, 1 };
-byte subnet[] = { 255, 255, 255, 0 };
+byte subnet[] = { 255, 255, 255, 0 };*/
 
 // serial connection
 int serialBaud = 19200;
@@ -29,7 +29,8 @@ void setup() {
   pinMode(rebootUnitPin, OUTPUT);
   Serial1.begin(serialBaud, serialCfg); // Open Serial1 communications
   Serial.begin(serialBaud, serialCfg); // Open Serial communications
-  Ethernet.begin(mac, ip, gateway, subnet); // Start the Ethernet connection
+  //Ethernet.begin(mac, ip, gateway, subnet); // Start the Ethernet connection
+  Ethernet.begin(mac);
   server.begin(); // Begin listening for TCP connections
   Serial.println();
   delay(250);
