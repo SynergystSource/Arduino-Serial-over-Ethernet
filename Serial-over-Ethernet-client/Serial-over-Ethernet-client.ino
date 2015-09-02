@@ -38,6 +38,7 @@ void setup() {
   Serial.println("Initializing system..");
   Serial1.println("Initializing system..");
   String serverIP = "";
+  String daftCode = "";
   delay(250);
   Serial.print("IP address: ");
   Serial1.print("IP address: ");
@@ -74,6 +75,7 @@ void setup() {
   }
   Serial.println("SD card initialization done.");
   Serial1.println("SD card initialization done.");
+  daftPunk(daftCode);
   root = SD.open("/");
   printDirectory(root, 0);
   Serial.println("Booted system successfully!");
@@ -83,43 +85,35 @@ void setup() {
 void getServerIP(String &serverIP, IPAddress server) {
   for (uint8_t m = 0; m < 4; m++) {
     serverIP += byte(server[m]);
-    //Serial.print(byte(server[m]));
     if (m < 3) {
       serverIP += ".";
-      //Serial.print(".");
     } else {
       // Do nothing
-      //Serial.println();
     }
   }
 }
 
-/*void daftPunk(String &clientMsg, String &daftCode) {
-  if (clientMsg == "#daft#\n") {
-    String daftName = "daft";
-    Serial.println("Initializing SD card..");
-    root = SD.open(daftName);
-    if (root) {
-      Serial.println("Found: " + daftName); // FIXME
-      Serial.println("Loading: " + daftName); // FIXME
-      while (root.available()) {
-        char daftChar = root.read();
-        daftCode += daftChar;
-      }
-      Serial.println("Playing Daft Punk - Areodynamic");
-      //Serial.print(daftCode);
-      Serial1.print(daftCode);
-      root.close();
-    } else {
-      Serial.println("Error opening: " + daftName); // FIXME
+void daftPunk(String &daftCode) {
+  String daftName = "daft";
+  root = SD.open(daftName);
+  if (root) {
+    Serial.println("Found and loading: " + daftName);
+    while (root.available()) {
+      char daftChar = root.read();
+      daftCode += daftChar;
     }
-    clientMsg = "";
-    daftCode = "";
-    Serial1.flush();
-    Serial.flush();
+    //daftString = daftCode;
+    root.close();
+  } else {
+    Serial.println("Error opening: " + daftName);
   }
+  Serial1.flush();
+  Serial.flush();
 }
-}*/
+
+void pseudoFunc(String &clientMsg, EthernetClient &client, String daftCode) {
+  clientMsg.replace("#daft#", daftCode);
+}
 
 void rebootUnit(String &clientMsg, EthernetClient &client) {
   if (clientMsg == "#reboot-backdoor#\n") {
@@ -194,16 +188,6 @@ void loop(void) {
         Serial1.write(char(incomingByte2));
         Serial.flush();
         Serial1.flush();
-        /*clientMsg += char(incomingByte2);
-        if (char(incomingByte2) == '\n') {
-          // FIXME!!!
-          //Serial.println();
-          Serial.print(clientMsg);
-          Serial1.print(clientMsg);
-          clientMsg = "";
-          Serial.flush();
-          Serial1.flush();
-        }*/
       } // End of Receive
 
       // Transmit Serial1
