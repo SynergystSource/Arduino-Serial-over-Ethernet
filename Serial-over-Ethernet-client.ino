@@ -1,7 +1,6 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <SD.h>
-#include <EEPROM.h>
 
 File root;
 
@@ -11,6 +10,7 @@ byte ip[] = { 10, 13, 38, 178 };
 byte gateway[] = { 10, 13, 38, 1 }; // Also used as DNS
 byte subnet[] = { 255, 255, 255, 0 };
 //IPAddress ip(10, 13, 38, 178);
+IPAddress server(10, 13, 38, 177);
 
 // serial connection
 int serialBaud = 19200;
@@ -23,19 +23,6 @@ int serverPort = 8888;
 EthernetClient client;
 
 int rebootUnitPin = 31;
-int setupConf = 30;
-int setupConfEnable = 0;
-int remAddr0 = 0;
-int remAddr1 = 1;
-int remAddr2 = 2;
-int remAddr3 = 3;
-
-// More Ethernet..
-int addOct0 = EEPROM.read(remAddr0);
-int addOct1 = EEPROM.read(remAddr1);
-int addOct2 = EEPROM.read(remAddr2);
-int addOct3 = EEPROM.read(remAddr3);
-IPAddress server(addOct0, addOct1, addOct2, addOct3);
 
 void setup() {
   delay(250);
@@ -44,33 +31,7 @@ void setup() {
   pinMode(rebootUnitPin, OUTPUT);
   Serial1.begin(serialBaud, serialCfg); // Open Serial1 communications
   Serial.begin(serialBaud, serialCfg); // Open Serial communications
-  pinMode(setupConf, INPUT);
-  setupConfEnable = digitalRead(setupConf);
-  if (setupConfEnable == LOW) {
-    Serial.println();
-    delay(2275);
-    Serial.println();
-    Serial.println("Entered setup mode..");
-    Serial1.println("Entered setup mode..");
-    EEPROM.write(remAddr0, 10);
-    EEPROM.write(remAddr1, 13);
-    EEPROM.write(remAddr2, 38);
-    EEPROM.write(remAddr3, 1);
-    Serial.print("Remote IP(EEPROM): ");
-    Serial1.print("Remote IP(EEPROM): ");
-    printRemAddr();
-  } else {
-    Serial.println();
-    delay(1275);
-    Serial.println();
-    Serial.println("Skipping EEPROM setup mode..");
-    Serial1.println("Skipping EEPROM setup mode..");
-    Serial.print("Remote IP(EEPROM): ");
-    Serial1.print("Remote IP(EEPROM): ");
-    printRemAddr();
-  }
   Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
-  //Ethernet.begin(mac);
   Serial.println();
   Serial1.println();
   delay(250);
@@ -105,7 +66,18 @@ void setup() {
     Serial.println("Connection failed");
     Serial1.println("Connection failed");
   }
-  initSDCard();
+  Serial.println("Initializing SD card...");
+  Serial1.println("Initializing SD card...");
+  if (!SD.begin(4)) {
+    Serial.println("SD card initialization failed!");
+    Serial1.println("SD card initialization failed!");
+    return;
+  }
+  Serial.println("SD card initialization done.");
+  Serial1.println("SD card initialization done.");
+  daftPunk(daftCode);
+  root = SD.open("/");
+  printDirectory(root, 0);
   Serial.println("Booted system successfully!");
   Serial1.println("Booted system successfully!");
 }
@@ -119,23 +91,6 @@ void getServerIP(String &serverIP, IPAddress server) {
       // Do nothing
     }
   }
-}
-
-void printRemAddr() {
-    Serial.print(EEPROM.read(remAddr0));
-    Serial1.print(EEPROM.read(remAddr0));
-    Serial.print(".");
-    Serial1.print(".");
-    Serial.print(EEPROM.read(remAddr1));
-    Serial1.print(EEPROM.read(remAddr1));
-    Serial.print(".");
-    Serial1.print(".");
-    Serial.print(EEPROM.read(remAddr2));
-    Serial1.print(EEPROM.read(remAddr2));
-    Serial.print(".");
-    Serial1.print(".");
-    Serial.print(EEPROM.read(remAddr3));
-    Serial1.print(EEPROM.read(remAddr3));
 }
 
 void daftPunk(String &daftCode) {
@@ -185,20 +140,6 @@ void rebootUnit(String &clientMsg, EthernetClient &client) {
     Serial1.flush();
     client.flush();
   }
-}
-
-void initSDCard() {
-  Serial.println("Initializing SD card...");
-  Serial1.println("Initializing SD card...");
-  if (!SD.begin(4)) {
-    Serial.println("SD card initialization failed!");
-    Serial1.println("SD card initialization failed!");
-    return;
-  }
-  Serial.println("SD card initialization done.");
-  Serial1.println("SD card initialization done.");
-  root = SD.open("/");
-  printDirectory(root, 0);
 }
 
 void printDirectory(File dir, int numTabs) {
@@ -290,8 +231,7 @@ void loop(void) {
     if (!client.connected()) {
       Serial.println("Disconnecting..");
       Serial1.println("Disconnecting..");
-      //Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
-      Ethernet.begin(mac);
+      Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
       Serial.println();
       delay(250);
       Serial.println("Initializing system..");
