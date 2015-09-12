@@ -5,21 +5,21 @@
 
 File root;
 
-// ethernet
+// Ethernet
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 byte ip[] = { 10, 13, 38, 178 };
 byte gateway[] = { 10, 13, 38, 1 }; // Also used as DNS
 byte subnet[] = { 255, 255, 255, 0 };
 //IPAddress ip(10, 13, 38, 178);
 
-// serial connection
+// Serial connection
 int serialBaud = 19200;
-int serialCfg = SERIAL_8N1; // Default settings controller has 8 data, 1 stop and no parity.
+int serialCfg = SERIAL_8N1; // Default settings controller has 8 data, no parity and 1 stop
 
-// socket parameters
+// Socket parameters
 int serverPort = 8888;
 
-// start TCP servers
+// Start TCP servers
 EthernetClient client;
 
 int rebootUnitPin = 31;
@@ -49,10 +49,10 @@ byte dec_digits[] = { 63, 6, 91, 79, 102, 109, 125, 7, 127, 111 };
 
 void setup() {
   delay(250);
-  //set pins to output so you can control the shift register
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
+  pinMode(setupConf, INPUT);
   digitalWrite(rebootUnitPin, HIGH);
   delay(250);
   pinMode(rebootUnitPin, OUTPUT);
@@ -66,27 +66,16 @@ void setup() {
   Serial1.println();
   Serial.println("Initializing system..");
   Serial1.println("Initializing system..");
-  pinMode(setupConf, INPUT);
   setupEEPROM();
-  //Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
-  Ethernet.begin(mac);
+  //Ethernet.begin(mac, ip, gateway, gateway, subnet);
+  Ethernet.begin(mac); // Start the Ethernet connection
   delay(250);
   String serverIP = "";
   String daftCode = "";
   delay(250);
-  Serial.print("IP address: ");
-  Serial1.print("IP address: ");
-  Serial.println(Ethernet.localIP());
-  Serial1.println(Ethernet.localIP());
-  // give the Ethernet shield a second to initialize:
-  Serial.println("Initializing Ethernet connection..");
-  Serial1.println("Initializing Ethernet connection..");
+  printLocalAddress();
   getServerIP(serverIP, server);
-  delay(250);
-  Serial.print("Connecting to ");
-  Serial1.print("Connecting to ");
-  Serial.println(serverIP);
-  Serial1.println(serverIP);
+  initEthernetLink(serverIP);
   // if you get a connection, report back via serial:
   if (client.connect(server, serverPort)) {
     Serial.print("Connected to: ");
@@ -101,6 +90,17 @@ void setup() {
   initSDCard();
   Serial.println("Booted system successfully!");
   Serial1.println("Booted system successfully!");
+}
+
+void initEthernetLink(String serverIP) {
+  // give the Ethernet shield a second to initialize:
+  Serial.println("Initializing Ethernet link..");
+  Serial1.println("Initializing Ethernet link..");
+  delay(250);
+  Serial.print("Connecting to ");
+  Serial1.print("Connecting to ");
+  Serial.println(serverIP);
+  Serial1.println(serverIP);
 }
 
 void setupEEPROM() {
@@ -152,6 +152,13 @@ void displayNumOnLED(int numberToDisplay) {
   shiftOut(dataPin, clockPin, MSBFIRST, dec_digits[numberToDisplay] + 128);
   //take the latch pin high so the LEDs will light up:
   digitalWrite(latchPin, HIGH);
+}
+
+void printLocalAddress() {
+  Serial.print("IP address: ");
+  Serial1.print("IP address: ");
+  Serial.println(Ethernet.localIP());
+  Serial1.println(Ethernet.localIP());
 }
 
 void printRemAddr() {
@@ -376,23 +383,12 @@ void loop(void) {
     if (!client.connected()) {
       Serial.println("Disconnecting..");
       Serial1.println("Disconnecting..");
-      //Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
       Ethernet.begin(mac);
       Serial.println();
       String serverIP = "";
       delay(250);
-      Serial.print("IP address: ");
-      Serial.println(Ethernet.localIP());
-      Serial.println();
-      // give the Ethernet shield a second to initialize:
-      Serial.println("Initializing Ethernet connection..");
-      Serial1.println("Initializing Ethernet connection..");
-      getServerIP(serverIP, server);
-      delay(250);
-      Serial.print("Connecting to ");
-      Serial1.print("Connecting to ");
-      Serial.println(serverIP);
-      Serial1.println(serverIP);
+      printLocalAddress();
+      initEthernetLink(serverIP);
       // if you get a connection, report back via serial:
       if (client.connect(server, serverPort)) {
         Serial.print("Connected to: ");
