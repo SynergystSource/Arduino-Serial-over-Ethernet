@@ -129,6 +129,8 @@ void setupEEPROM() {
     Serial.print("Remote IP(EEPROM): ");
     Serial1.print("Remote IP(EEPROM): ");
     printRemAddr();
+    Serial.println();
+    Serial1.println();
     displayNumOnLED(0);
   }
 }
