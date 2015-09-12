@@ -9,5 +9,4 @@ To use this script you will need an Arduino Mega with an Arduino Ethernet shield
 This is the initial release version, so there are bugs and some limitations.
 I am working on making the stock firmware/code more friendly to conventional serial communication software.
 
-So far this is compatible with GtkTerm(more clients will be tested later..) with semi-stock settings.
-NOTICE: GtkTerm must have the 'CR-LF auto' option enabled for proper printing(still trying to fix this issue before the release of the Arduino-Serial-over-Ethernet-server section is released)!
+So far this is compatible with GtkTerm(more clients will be tested later..)
