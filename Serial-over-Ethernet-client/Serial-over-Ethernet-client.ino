@@ -57,7 +57,7 @@ void setup() {
   delay(250);
   pinMode(rebootUnitPin, OUTPUT);
   pinMode(hardwareRebootPin, INPUT);
-  Serial2.begin(serialBaud, serialCfg); // Open Serial1 communications
+  Serial2.begin(serialBaud, serialCfg); // Open Serial2 communications
   Serial1.begin(serialBaud, serialCfg); // Open Serial1 communications
   Serial.begin(serialBaud, serialCfg); // Open Serial communications
   Serial.println();
