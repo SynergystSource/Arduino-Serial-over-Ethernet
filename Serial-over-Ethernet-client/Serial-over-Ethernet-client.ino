@@ -23,8 +23,8 @@ int serverPort = 8888;
 EthernetClient client;
 
 int rebootUnitPin = 31;
-int setupConf = 30;
-int setupConfEnable = 0;
+int hardwareRebootPin = 30;
+int setupConf = 28;
 int remAddr0 = 0;
 int remAddr1 = 1;
 int remAddr2 = 2;
@@ -37,21 +37,36 @@ int addOct2 = EEPROM.read(remAddr2);
 int addOct3 = EEPROM.read(remAddr3);
 IPAddress server(addOct0, addOct1, addOct2, addOct3);
 
+// Shift register(output)
+int dataPin = 32;
+int latchPin = 34;
+int clockPin = 36;
+
+//byte dec_digits[] = {0b11000000,0b11111001,0b10100100,0b10110000,0b10011001,0b10010010,0b10000011,0b11111000,0b10000000,0b10011000 };
+byte dec_digits[] = { 63, 6, 91, 79, 102, 109, 125, 7, 127, 111 };
+
 void setup() {
   delay(250);
   digitalWrite(rebootUnitPin, HIGH);
   delay(250);
   pinMode(rebootUnitPin, OUTPUT);
+  pinMode(hardwareRebootPin, INPUT);
+  Serial2.begin(serialBaud, serialCfg); // Open Serial1 communications
   Serial1.begin(serialBaud, serialCfg); // Open Serial1 communications
   Serial.begin(serialBaud, serialCfg); // Open Serial communications
+  Serial.println();
+  Serial1.println();
+  Serial.println();
+  Serial1.println();
+  Serial.println("Initializing system..");
+  Serial1.println("Initializing system..");
   pinMode(setupConf, INPUT);
-  setupConfEnable = digitalRead(setupConf);
-  if (setupConfEnable == LOW) {
+  if (digitalRead(setupConf) == LOW) {
     Serial.println();
-    delay(2275);
+    delay(275);
     Serial.println();
-    Serial.println("Entered setup mode..");
-    Serial1.println("Entered setup mode..");
+    Serial.println("Entered EEPROM setup mode..");
+    Serial1.println("Entered EEPROM setup mode..");
     EEPROM.write(remAddr0, 10);
     EEPROM.write(remAddr1, 13);
     EEPROM.write(remAddr2, 38);
@@ -59,9 +74,11 @@ void setup() {
     Serial.print("Remote IP(EEPROM): ");
     Serial1.print("Remote IP(EEPROM): ");
     printRemAddr();
+    Serial.println();
+    Serial1.println();
   } else {
     Serial.println();
-    delay(1275);
+    delay(275);
     Serial.println();
     Serial.println("Skipping EEPROM setup mode..");
     Serial1.println("Skipping EEPROM setup mode..");
@@ -69,13 +86,9 @@ void setup() {
     Serial1.print("Remote IP(EEPROM): ");
     printRemAddr();
   }
-  Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
-  //Ethernet.begin(mac);
-  Serial.println();
-  Serial1.println();
+  //Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
+  Ethernet.begin(mac);
   delay(250);
-  Serial.println("Initializing system..");
-  Serial1.println("Initializing system..");
   String serverIP = "";
   String daftCode = "";
   delay(250);
@@ -83,11 +96,9 @@ void setup() {
   Serial1.print("IP address: ");
   Serial.println(Ethernet.localIP());
   Serial1.println(Ethernet.localIP());
-  Serial.println();
-  Serial1.println();
   // give the Ethernet shield a second to initialize:
-  Serial.println("Initializing Ethernet");
-  Serial1.println("Initializing Ethernet");
+  Serial.println("Initializing Ethernet connection..");
+  Serial1.println("Initializing Ethernet connection..");
   getServerIP(serverIP, server);
   delay(250);
   Serial.print("Connecting to ");
@@ -121,21 +132,32 @@ void getServerIP(String &serverIP, IPAddress server) {
   }
 }
 
+void displayNumOnLED(int numberToDisplay) {
+  Serial.println(numberToDisplay);
+  // take the latchPin low so
+  // the LEDs don't change while you're sending in bits:
+  digitalWrite(latchPin, LOW);
+  // shift out the bits:
+  shiftOut(dataPin, clockPin, MSBFIRST, dec_digits[numberToDisplay] + 128);
+  //take the latch pin high so the LEDs will light up:
+  digitalWrite(latchPin, HIGH);
+}
+
 void printRemAddr() {
-    Serial.print(EEPROM.read(remAddr0));
-    Serial1.print(EEPROM.read(remAddr0));
-    Serial.print(".");
-    Serial1.print(".");
-    Serial.print(EEPROM.read(remAddr1));
-    Serial1.print(EEPROM.read(remAddr1));
-    Serial.print(".");
-    Serial1.print(".");
-    Serial.print(EEPROM.read(remAddr2));
-    Serial1.print(EEPROM.read(remAddr2));
-    Serial.print(".");
-    Serial1.print(".");
-    Serial.print(EEPROM.read(remAddr3));
-    Serial1.print(EEPROM.read(remAddr3));
+  Serial.print(EEPROM.read(remAddr0));
+  Serial1.print(EEPROM.read(remAddr0));
+  Serial.print(".");
+  Serial1.print(".");
+  Serial.print(EEPROM.read(remAddr1));
+  Serial1.print(EEPROM.read(remAddr1));
+  Serial.print(".");
+  Serial1.print(".");
+  Serial.print(EEPROM.read(remAddr2));
+  Serial1.print(EEPROM.read(remAddr2));
+  Serial.print(".");
+  Serial1.print(".");
+  Serial.print(EEPROM.read(remAddr3));
+  Serial1.print(EEPROM.read(remAddr3));
 }
 
 void daftPunk(String &daftCode) {
@@ -166,6 +188,7 @@ void rebootUnit(String &clientMsg, EthernetClient &client) {
     Serial1.println("#Initiating client reboot..#");
     client.println("#Initiating client reboot..#");
     for (uint8_t i = 5; i > 0; i--) {
+      displayNumOnLED(i);
       String r = String(i);
       Serial.println("#Rebooting in " + r + " seconds..#");
       Serial1.println("#Rebooting in " + r + " seconds..#");
@@ -185,6 +208,31 @@ void rebootUnit(String &clientMsg, EthernetClient &client) {
     Serial1.flush();
     client.flush();
   }
+}
+
+void hardwareReboot(EthernetClient &client) {
+  Serial.println("#Initiating hardware pin client reboot..#");
+  Serial1.println("#Initiating hardware pin client reboot..#");
+  client.println("#Initiating hardware pin client reboot..#");
+  for (uint8_t i = 5; i > 0; i--) {
+    displayNumOnLED(i);
+    String r = String(i);
+    Serial.println("#Rebooting in " + r + " seconds..#");
+    Serial1.println("#Rebooting in " + r + " seconds..#");
+    client.println("#Rebooting in " + r + " seconds..#");
+    delay(1000);
+  }
+  delay(500);
+  client.stop();
+  delay(500);
+  digitalWrite(rebootUnitPin, LOW);
+  Serial.println("#Client hardware pin reboot failed!#");
+  Serial1.println("#Client hardware pin reboot failed!#");
+  Serial.println("#Unit is soft rebooting!#");
+  Serial1.println("#Unit is soft rebooting!#");
+  Serial.flush();
+  Serial1.flush();
+  client.flush();
 }
 
 void initSDCard() {
@@ -237,17 +285,44 @@ void loop(void) {
   if (client) {
     String clientMsg = "";
     // FIXME?
-    while (client.connected()) {
+    // Was a while loop
+    if (client.connected()) {
+
+      // Reboot via hardware input pin
+      if (digitalRead(hardwareRebootPin) == HIGH) {
+        Serial.println("#Caught reboot signal!#");
+        Serial1.println("#Caught reboot signal!#");
+        hardwareReboot(client);
+      }
 
       // Receive
-      int incomingByte2 = 0;
+      int incomingClientByte = 0;
       if (client.available() > 0) {
-        incomingByte2 = client.read();
-        Serial.write(char(incomingByte2));
-        Serial1.write(char(incomingByte2));
+        incomingClientByte = client.read();
+        Serial.write(char(incomingClientByte));
+        Serial1.write(char(incomingClientByte));
         Serial.flush();
         Serial1.flush();
       } // End of Receive
+
+      // Transmit Serial2
+      int incomingByte2 = 0; // For incoming serial data
+      while (Serial2.available() > 0) { // If data has been received from the serial connection
+        incomingByte2 = Serial2.read();
+        client.write(char(incomingByte2));
+        clientMsg += char(incomingByte2);
+        if (char(incomingByte2) == '\n') {
+          //rebootUnit(clientMsg, client);
+          //client.print(clientMsg); // Then send the message through the Ethernet shield
+          Serial.print(clientMsg);
+          Serial1.print(clientMsg);
+          clientMsg = "";
+          client.flush();
+          Serial.flush();
+          Serial1.flush();
+          Serial2.flush();
+        }
+      } // End of Transmit Serial2
 
       // Transmit Serial1
       int incomingByte1 = 0; // For incoming serial data
@@ -293,17 +368,14 @@ void loop(void) {
       //Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
       Ethernet.begin(mac);
       Serial.println();
-      delay(250);
-      Serial.println("Initializing system..");
-      Serial1.println("Initializing system..");
       String serverIP = "";
       delay(250);
       Serial.print("IP address: ");
       Serial.println(Ethernet.localIP());
       Serial.println();
       // give the Ethernet shield a second to initialize:
-      Serial.println("Initializing Ethernet");
-      Serial1.println("Initializing Ethernet");
+      Serial.println("Initializing Ethernet connection..");
+      Serial1.println("Initializing Ethernet connection..");
       getServerIP(serverIP, server);
       delay(250);
       Serial.print("Connecting to ");
