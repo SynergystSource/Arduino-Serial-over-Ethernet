@@ -41,12 +41,18 @@ IPAddress server(addOct0, addOct1, addOct2, addOct3);
 int dataPin = 32;
 int latchPin = 34;
 int clockPin = 36;
+// More shift register stuffz
+//int numberToDisplay = 0;
 
 //byte dec_digits[] = {0b11000000,0b11111001,0b10100100,0b10110000,0b10011001,0b10010010,0b10000011,0b11111000,0b10000000,0b10011000 };
 byte dec_digits[] = { 63, 6, 91, 79, 102, 109, 125, 7, 127, 111 };
 
 void setup() {
   delay(250);
+  //set pins to output so you can control the shift register
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
   digitalWrite(rebootUnitPin, HIGH);
   delay(250);
   pinMode(rebootUnitPin, OUTPUT);
@@ -76,6 +82,7 @@ void setup() {
     printRemAddr();
     Serial.println();
     Serial1.println();
+    displayNumOnLED(1);
   } else {
     Serial.println();
     delay(275);
@@ -85,6 +92,7 @@ void setup() {
     Serial.print("Remote IP(EEPROM): ");
     Serial1.print("Remote IP(EEPROM): ");
     printRemAddr();
+    displayNumOnLED(0);
   }
   //Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
   Ethernet.begin(mac);
@@ -133,7 +141,6 @@ void getServerIP(String &serverIP, IPAddress server) {
 }
 
 void displayNumOnLED(int numberToDisplay) {
-  Serial.println(numberToDisplay);
   // take the latchPin low so
   // the LEDs don't change while you're sending in bits:
   digitalWrite(latchPin, LOW);
