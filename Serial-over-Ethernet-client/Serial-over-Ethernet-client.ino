@@ -67,33 +67,7 @@ void setup() {
   Serial.println("Initializing system..");
   Serial1.println("Initializing system..");
   pinMode(setupConf, INPUT);
-  if (digitalRead(setupConf) == LOW) {
-    Serial.println();
-    delay(275);
-    Serial.println();
-    Serial.println("Entered EEPROM setup mode..");
-    Serial1.println("Entered EEPROM setup mode..");
-    EEPROM.write(remAddr0, 10);
-    EEPROM.write(remAddr1, 13);
-    EEPROM.write(remAddr2, 38);
-    EEPROM.write(remAddr3, 1);
-    Serial.print("Remote IP(EEPROM): ");
-    Serial1.print("Remote IP(EEPROM): ");
-    printRemAddr();
-    Serial.println();
-    Serial1.println();
-    displayNumOnLED(1);
-  } else {
-    Serial.println();
-    delay(275);
-    Serial.println();
-    Serial.println("Skipping EEPROM setup mode..");
-    Serial1.println("Skipping EEPROM setup mode..");
-    Serial.print("Remote IP(EEPROM): ");
-    Serial1.print("Remote IP(EEPROM): ");
-    printRemAddr();
-    displayNumOnLED(0);
-  }
+  setupEEPROM();
   //Ethernet.begin(mac, ip, gateway, gateway, subnet); // Start the Ethernet connection
   Ethernet.begin(mac);
   delay(250);
@@ -127,6 +101,36 @@ void setup() {
   initSDCard();
   Serial.println("Booted system successfully!");
   Serial1.println("Booted system successfully!");
+}
+
+void setupEEPROM() {
+  if (digitalRead(setupConf) == LOW) {
+    Serial.println();
+    delay(275);
+    Serial.println();
+    Serial.println("Entered EEPROM setup mode..");
+    Serial1.println("Entered EEPROM setup mode..");
+    EEPROM.write(remAddr0, 10);
+    EEPROM.write(remAddr1, 13);
+    EEPROM.write(remAddr2, 38);
+    EEPROM.write(remAddr3, 1);
+    Serial.print("Remote IP(EEPROM): ");
+    Serial1.print("Remote IP(EEPROM): ");
+    printRemAddr();
+    Serial.println();
+    Serial1.println();
+    displayNumOnLED(1);
+  } else {
+    Serial.println();
+    delay(275);
+    Serial.println();
+    Serial.println("Skipping EEPROM setup mode..");
+    Serial1.println("Skipping EEPROM setup mode..");
+    Serial.print("Remote IP(EEPROM): ");
+    Serial1.print("Remote IP(EEPROM): ");
+    printRemAddr();
+    displayNumOnLED(0);
+  }
 }
 
 void getServerIP(String &serverIP, IPAddress server) {
